@@ -38,4 +38,15 @@ public class FunctionDetailsTest {
         assertEquals(ProcessingGuarantees.ATLEAST_ONCE, fc.getProcessingGuarantees());
     }
 
+    /**
+     * Make sure can set and get subscription name
+     */
+    @Test
+    public void testSubscriptionName() {
+        FunctionDetails.Builder functionDetailsBuilder = FunctionDetails.newBuilder();
+        String subName = "my-subscription";
+        functionDetailsBuilder.setSubscriptionName(subName);
+        assertEquals(subName, functionDetailsBuilder.getSubscriptionName());
+    }
+
 }
