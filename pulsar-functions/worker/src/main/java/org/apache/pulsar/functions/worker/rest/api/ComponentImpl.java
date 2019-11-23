@@ -958,6 +958,7 @@ public abstract class ComponentImpl {
             log.error("Function in trigger function is not ready @ /{}/{}/{}", tenant, namespace, functionName);
             throw new RestException(Status.BAD_REQUEST, "Function in trigger function is not ready");
         }
+
         String outputTopic = functionMetaData.getFunctionDetails().getSink().getTopic();
         Reader<byte[]> reader = null;
         Producer<byte[]> producer = null;
@@ -986,25 +987,22 @@ public abstract class ComponentImpl {
             if (reader == null) {
                 return null;
             }
-            long curTime = System.currentTimeMillis();
-            long maxTime = curTime + 1000;
-            while (curTime < maxTime) {
-                Message msg = reader.readNext(10000, TimeUnit.MILLISECONDS);
-                if (msg == null)
-                    break;
-                if (msg.getProperties().containsKey("__pfn_input_msg_id__")
-                        && msg.getProperties().containsKey("__pfn_input_topic__")) {
-                    MessageId newMsgId = MessageId.fromByteArray(
-                            Base64.getDecoder().decode((String) msg.getProperties().get("__pfn_input_msg_id__")));
 
-                    if (msgId.equals(newMsgId)
-                            && msg.getProperties().get("__pfn_input_topic__").equals(TopicName.get(inputTopicToWrite).toString())) {
-                       return new String(msg.getData());
-                    }
-                }
-                curTime = System.currentTimeMillis();
+            Message msg = reader.readNext(2500, TimeUnit.MILLISECONDS);
+
+            if (msg == null) {
+                return new String("No Message On Output Topic");
             }
-            throw new RestException(Status.REQUEST_TIMEOUT, "Request Timed Out");
+
+            if (msg.getProperties().containsKey("__pfn_input_msg_id__")
+                    && msg.getProperties().containsKey("__pfn_input_topic__")) {
+                MessageId newMsgId = MessageId.fromByteArray(
+                        Base64.getDecoder().decode((String) msg.getProperties().get("__pfn_input_msg_id__")));
+                if (msgId.equals(newMsgId)
+                        && msg.getProperties().get("__pfn_input_topic__").equals(TopicName.get(inputTopicToWrite).toString())) {
+                    return new String(msg.getData());
+                }
+            }
         } catch (SchemaSerializationException e) {
             throw new RestException(Status.BAD_REQUEST, String.format("Failed to serialize input with error: %s. Please check if input data conforms with the schema of the input topic.", e.getMessage()));
         } catch (IOException e) {
@@ -1017,6 +1015,9 @@ public abstract class ComponentImpl {
                 producer.closeAsync();
             }
         }
+
+        return null;
+
     }
 
     public FunctionState getFunctionState(final String tenant,
