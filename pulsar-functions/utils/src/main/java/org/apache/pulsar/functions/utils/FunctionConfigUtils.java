@@ -172,9 +172,6 @@ public class FunctionConfigUtils {
             functionDetailsBuilder.setProcessingGuarantees(
                     FunctionCommon.convertProcessingGuarantee(functionConfig.getProcessingGuarantees()));
         }
-        if (isNotBlank(functionConfig.getSubName())) {
-            functionDetailsBuilder.setSubscriptionName(functionConfig.getSubName());
-        }
 
         if (functionConfig.getMaxMessageRetries() != null && functionConfig.getMaxMessageRetries() >= 0) {
             Function.RetryDetails.Builder retryBuilder = Function.RetryDetails.newBuilder();
