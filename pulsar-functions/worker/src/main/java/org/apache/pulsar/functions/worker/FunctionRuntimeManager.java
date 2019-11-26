@@ -501,16 +501,13 @@ public class FunctionRuntimeManager implements AutoCloseable{
     public FunctionStats.FunctionInstanceStats.FunctionInstanceStatsData getFunctionInstanceStats(String tenant, String namespace,
                                                                         String functionName, int instanceId, URI uri) {
         Assignment assignment;
-        log.warn("Getting function instance stats. Tenant {} Namespace {} Function {} Instances {} URI {}", tenant, namespace, functionName, instanceId, uri);
         if (runtimeFactory.externallyManaged()) {
-            log.warn("Runtime is externally managed");
             assignment = this.findAssignment(tenant, namespace, functionName, -1);
         } else {
             assignment = this.findAssignment(tenant, namespace, functionName, instanceId);
         }
 
         if (assignment == null) {
-            log.warn("Assignment is null");
             return new FunctionStats.FunctionInstanceStats.FunctionInstanceStatsData();
         }
 
@@ -519,7 +516,6 @@ public class FunctionRuntimeManager implements AutoCloseable{
 
         // If I am running worker
         if (assignedWorkerId.equals(workerId)) {
-            log.warn("I am the assigned function worker");
             FunctionRuntimeInfo functionRuntimeInfo = this.getFunctionRuntimeInfo(
                     FunctionCommon.getFullyQualifiedInstanceId(assignment.getInstance()));
             RuntimeSpawner runtimeSpawner = functionRuntimeInfo.getRuntimeSpawner();
@@ -529,8 +525,6 @@ public class FunctionRuntimeManager implements AutoCloseable{
             return new FunctionStats.FunctionInstanceStats.FunctionInstanceStatsData();
         } else {
             // query other worker
-            log.warn("Some other is the assigned function worker");
-
             List<WorkerInfo> workerInfoList = this.membershipManager.getCurrentMembership();
             WorkerInfo workerInfo = null;
             for (WorkerInfo entry: workerInfoList) {
@@ -539,15 +533,12 @@ public class FunctionRuntimeManager implements AutoCloseable{
                 }
             }
             if (workerInfo == null) {
-                log.warn("Worker info is null");
                 return new FunctionStats.FunctionInstanceStats.FunctionInstanceStatsData();
             }
 
             if (uri == null) {
-                log.warn("uri is null");
                 throw new WebApplicationException(Response.serverError().status(Status.INTERNAL_SERVER_ERROR).build());
             } else {
-                log.warn("uri is not null, redirecting to host {} and port {}", workerInfo.getWorkerHostname(), workerInfo.getPort());
                 URI redirect = UriBuilder.fromUri(uri).host(workerInfo.getWorkerHostname()).port(workerInfo.getPort()).build();
                 throw new WebApplicationException(Response.temporaryRedirect(redirect).build());
             }
