@@ -117,7 +117,9 @@ public class InstanceUtils {
     }
 
     public static String getDefaultSubscriptionName(String tenant, String namespace, String name) {
-        return FunctionCommon.getFullyQualifiedName(tenant, namespace, name);
+        // Hacking this to just return the function name. Using a FQFN breaks the REST endpoints
+        // that deal with subscriptions
+        return name;
     }
 
     public static String getDefaultSubscriptionName(Function.FunctionDetails functionDetails) {
