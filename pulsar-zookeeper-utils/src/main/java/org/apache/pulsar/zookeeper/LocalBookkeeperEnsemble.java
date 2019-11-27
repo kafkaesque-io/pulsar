@@ -101,7 +101,7 @@ public class LocalBookkeeperEnsemble {
 
 
     public LocalBookkeeperEnsemble(int numberOfBookies, int zkPort, Supplier<Integer> portManager) {
-        this(numberOfBookies, zkPort, 4181, null, null, true, null, portManager);
+        this(numberOfBookies, zkPort, 4181, null, null, true, null, portManager,2);
     }
 
     public LocalBookkeeperEnsemble(int numberOfBookies, int zkPort, int bkBasePort, String zkDataDirName,
@@ -123,7 +123,20 @@ public class LocalBookkeeperEnsemble {
                                    boolean clearOldData,
                                    String advertisedAddress) {
         this(numberOfBookies, zkPort, 4181, zkDataDirName, bkDataDirName, clearOldData, advertisedAddress,
-                new BasePortManager(bkBasePort));
+                new BasePortManager(bkBasePort), 2);
+    }
+
+    public LocalBookkeeperEnsemble(int numberOfBookies,
+                                   int zkPort,
+                                   int bkBasePort,
+                                   int streamStoragePort,
+                                   String zkDataDirName,
+                                   String bkDataDirName,
+                                   boolean clearOldData,
+                                   String advertisedAddress,
+                                   int numContainers) {
+        this(numberOfBookies, zkPort, 4181, zkDataDirName, bkDataDirName, clearOldData, advertisedAddress,
+                new BasePortManager(bkBasePort), numContainers);
     }
 
     public LocalBookkeeperEnsemble(int numberOfBookies,
@@ -133,12 +146,14 @@ public class LocalBookkeeperEnsemble {
             String bkDataDirName,
             boolean clearOldData,
             String advertisedAddress,
-            Supplier<Integer> portManager) {
+            Supplier<Integer> portManager,
+            int numContainers) {
         this.numberOfBookies = numberOfBookies;
         this.HOSTPORT = "127.0.0.1:" + zkPort;
         this.ZooKeeperDefaultPort = zkPort;
         this.portManager = portManager;
         this.streamStoragePort = streamStoragePort;
+        this.numContainers = numContainers;
         this.zkDataDirName = zkDataDirName;
         this.bkDataDirName = bkDataDirName;
         this.clearOldData = clearOldData;
@@ -163,6 +178,7 @@ public class LocalBookkeeperEnsemble {
     // Stream/Table Storage
     StreamStorageLifecycleComponent streamStorage;
     Integer streamStoragePort = 4181;
+    Integer numContainers = 2;
 
     private void runZookeeper(int maxCC) throws IOException {
         // create a ZooKeeper server(dataDir, dataLogDir, port)
@@ -304,7 +320,7 @@ public class LocalBookkeeperEnsemble {
 
         // initialize the stream storage metadata
         ClusterInitializer initializer = new ZkClusterInitializer(zkServers);
-        initializer.initializeCluster(metadataServiceUri, 2);
+        initializer.initializeCluster(metadataServiceUri, this.numContainers);
 
         // load the stream storage component
         ServerConfiguration serverConf = new ServerConfiguration();
