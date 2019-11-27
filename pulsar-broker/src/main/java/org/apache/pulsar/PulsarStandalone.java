@@ -127,6 +127,10 @@ public class PulsarStandalone implements AutoCloseable {
         this.streamStoragePort = streamStoragePort;
     }
 
+    public void setStreamContainers(int streamContainers) {
+        this.streamContainers = streamContainers;
+    }
+
     public void setHelp(boolean help) {
         this.help = help;
     }
@@ -187,6 +191,10 @@ public class PulsarStandalone implements AutoCloseable {
         return streamStoragePort;
     }
 
+    public int getStreamContainers() {
+        return streamContainers;
+    }
+
     public String getAdvertisedAddress() {
         return advertisedAddress;
     }
@@ -234,6 +242,9 @@ public class PulsarStandalone implements AutoCloseable {
     @Parameter(names = { "--stream-storage-port" }, description = "Local bookies stream storage port")
     private int streamStoragePort = 4181;
 
+    @Parameter(names = { "--stream-containers" }, description = "Number of stream storage containers")
+    private int streamContainers = 2;
+
     @Parameter(names = { "-a", "--advertised-address" }, description = "Standalone broker advertised address")
     private String advertisedAddress = null;
 
@@ -255,7 +266,7 @@ public class PulsarStandalone implements AutoCloseable {
             // Start LocalBookKeeper
             bkEnsemble = new LocalBookkeeperEnsemble(
                     this.getNumOfBk(), this.getZkPort(), this.getBkPort(), this.getStreamStoragePort(), this.getZkDir(),
-                    this.getBkDir(), this.isWipeData(), "127.0.0.1");
+                    this.getBkDir(), this.isWipeData(), "127.0.0.1", this.getStreamContainers());
             bkEnsemble.startStandalone(bkServerConf, !this.isNoStreamStorage());
         }
 
