@@ -122,7 +122,7 @@ public class ZkIsolatedBookieEnsemblePlacementPolicy extends RackawareEnsemblePl
             throws BKNotEnoughBookiesException {
         Set<BookieSocketAddress> blacklistedBookies = getBlacklistedBookies(ensembleSize);
         if (excludeBookies == null) {
-             = new HashSet<BookieSocketAddress>();
+            excludeBookies = new HashSet<BookieSocketAddress>();
         }
         excludeBookies.addAll(blacklistedBookies);
         return super.newEnsemble(ensembleSize, writeQuorumSize, ackQuorumSize, customMetadata, excludeBookies);
