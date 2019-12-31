@@ -33,7 +33,7 @@
   <groupId>org.apache.pulsar</groupId>
   <artifactId>pulsar</artifactId>
 
-  <version>2.4.2</version>
+  <version>2.4.2-k2</version>
 
   <name>Pulsar</name>
   <description>Pulsar is a distributed pub-sub messaging platform with a very
@@ -148,7 +148,7 @@ flexible messaging model and an intuitive client API.</description>
     <!-- apache commons -->
     <commons-compress.version>1.19</commons-compress.version>
 
-    <bookkeeper.version>4.9.2-k1</bookkeeper.version>
+    <bookkeeper.version>4.9.3-SNAPSHOT</bookkeeper.version>
     <zookeeper.version>3.4.13</zookeeper.version>
     <netty.version>4.1.43.Final</netty.version>
     <netty-tc-native.version>2.0.26.Final</netty-tc-native.version>
@@ -339,7 +339,7 @@ flexible messaging model and an intuitive client API.</description>
       <dependency>
         <groupId>org.apache.bookkeeper</groupId>
         <artifactId>stream-storage-java-client</artifactId>
-        <version>${bookkeeper.version}</version>
+	<version>${bookkeeper.version}</version>
         <exclusions>
           <exclusion>
             <groupId>io.grpc</groupId>
@@ -352,7 +352,7 @@ flexible messaging model and an intuitive client API.</description>
       <dependency>
         <groupId>org.apache.bookkeeper</groupId>
         <artifactId>stream-storage-server</artifactId>
-        <version>${bookkeeper.version}</version>
+	<version>${bookkeeper.version}</version>
         <exclusions>
           <exclusion>
             <groupId>io.grpc</groupId>
