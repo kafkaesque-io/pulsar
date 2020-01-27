@@ -81,6 +81,12 @@ public class TieredStorageConfigurationData implements Serializable, Cloneable {
     // For more details, see the "Service Accounts" section of https://support.google.com/googleapi/answer/6158849
     private String gcsManagedLedgerOffloadServiceAccountKeyFile = null;
 
+    private String azureStorageAccountName = null;
+    private String azureStorageAccountKey = null;
+    private String azureStorageContainer = null;
+    private int azureManagedLedgerOffloadMaxBlockSizeInBytes = 64 * 1024 * 1024; // 64MB
+    private int azureManagedLedgerOffloadReadBufferSizeInBytes = 1024 * 1024; // 1MB
+
     /**
      * Builds an AWS credential provider based on the offload options
      * @return aws credential provider
