@@ -72,6 +72,7 @@ import org.jclouds.osgi.ProviderRegistry;
 import org.jclouds.s3.reference.S3Constants;
 import org.jclouds.osgi.ApiRegistry;
 import org.jclouds.s3.S3ApiMetadata;
+import org.jclouds.azureblob.AzureBlobProviderMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +83,7 @@ public class BlobStoreManagedLedgerOffloader implements LedgerOffloader {
     private static final String METADATA_FIELD_REGION = "region";
     private static final String METADATA_FIELD_ENDPOINT = "endpoint";
 
-    public static final String[] DRIVER_NAMES = {"S3", "aws-s3", "google-cloud-storage"};
+    public static final String[] DRIVER_NAMES = {"S3", "aws-s3", "google-cloud-storage", "azureblob"};
 
     // use these keys for both s3 and gcs.
     static final String METADATA_FORMAT_VERSION_KEY = "S3ManagedLedgerOffloaderFormatVersion";
@@ -98,6 +99,10 @@ public class BlobStoreManagedLedgerOffloader implements LedgerOffloader {
 
     public static boolean isGcsDriver(String driver) {
         return driver.equalsIgnoreCase(DRIVER_NAMES[2]);
+    }
+
+    public static boolean isAzureBlobDriver(String driver) {
+        return driver.equalsIgnoreCase(DRIVER_NAMES[3]);
     }
 
     private static void addVersionInfo(BlobBuilder blobBuilder, Map<String, String> userMetadata) {
@@ -128,6 +133,7 @@ public class BlobStoreManagedLedgerOffloader implements LedgerOffloader {
         ApiRegistry.registerApi(new S3ApiMetadata());
         ProviderRegistry.registerProvider(new AWSS3ProviderMetadata());
         ProviderRegistry.registerProvider(new GoogleCloudStorageProviderMetadata());
+        ProviderRegistry.registerProvider(new AzureBlobProviderMetadata());
 
         ContextBuilder contextBuilder = ContextBuilder.newBuilder(driver);
         contextBuilder.credentialsSupplier(credentials);
@@ -217,14 +223,22 @@ public class BlobStoreManagedLedgerOffloader implements LedgerOffloader {
                     + " if s3 offload enabled");
         }
 
+        bucket = isAzureBlobDriver(driver) ?
+            conf.getAzureStorageContainer() : bucket;
         if (Strings.isNullOrEmpty(bucket)) {
             throw new IOException(
-                "ManagedLedgerOffloadBucket cannot be empty for s3 and gcs offload");
+                "ManagedLedgerOffloadBucket cannot be empty for s3, azure blob or gcs offload");
         }
+
+        maxBlockSize = isAzureBlobDriver(driver) ?
+            conf.getAzureManagedLedgerOffloadMaxBlockSizeInBytes() : maxBlockSize;
         if (maxBlockSize < 5*1024*1024) {
             throw new IOException(
                 "ManagedLedgerOffloadMaxBlockSizeInBytes cannot be less than 5MB for s3 and gcs offload");
         }
+
+        readBufferSize = isAzureBlobDriver(driver) ?
+            conf.getAzureManagedLedgerOffloadReadBufferSizeInBytes() : readBufferSize;
 
         Supplier<Credentials> credentials = getCredentials(driver, conf);
 
@@ -282,6 +296,16 @@ public class BlobStoreManagedLedgerOffloader implements LedgerOffloader {
                     return new Credentials(creds.getAWSAccessKeyId(), creds.getAWSSecretKey());
                 }
             };
+        } else if (isAzureBlobDriver(driver)) {
+            String accountName = conf.getAzureStorageAccountName();
+            String accountKey = conf.getAzureStorageAccountKey();
+            if (Strings.isNullOrEmpty(accountName) || Strings.isNullOrEmpty(accountKey)) {
+                throw new RuntimeException("Unable to fetch Azure credentials after start, unexpected!");
+            }
+            return () -> {
+                return new Credentials(accountName, accountKey);
+            };
+
         } else {
             throw new IOException(
                 "Not support this kind of driver: " + driver);
@@ -316,6 +340,7 @@ public class BlobStoreManagedLedgerOffloader implements LedgerOffloader {
                 .description(region)
                 .build();
         } else {
+            // Azure has only one local `azureblob` so it does not require location or writeLocation
             this.writeLocation = null;
         }
 
