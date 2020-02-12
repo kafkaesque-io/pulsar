@@ -34,8 +34,8 @@ mvn versions:set -DnewVersion=$NEW_VERSION
 mvn versions:set -DnewVersion=$NEW_VERSION -pl buildtools
 mvn versions:set -DnewVersion=$NEW_VERSION -pl pulsar-sql/presto-distribution
 # install the new version of root pom local, so `update-parent` can update the right parent version
-mvn -am -pl . clean install -DskipTests
-mvn versions:update-parent -DallowSnapshots=true -DparentVersion=$NEW_VERSION -f protobuf-shaded/pom.xml
+mvn versions:update-parent -DparentVersion=$NEW_VERSION -f protobuf-shaded/pom.xml
 mvn versions:set -DnewVersion=$NEW_VERSION -f protobuf-shaded/pom.xml
+mvn -am -pl . clean install -DskipTests
 
 popd
