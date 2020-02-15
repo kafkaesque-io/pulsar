@@ -50,6 +50,8 @@ fi
 MVN_VERSION=`./get-version.sh`
 echo "Pulsar version: ${MVN_VERSION}"
 
+exit
+
 if [[ -z ${DOCKER_REGISTRY} ]]; then
     docker_registry_org=${DOCKER_ORG}
 else
