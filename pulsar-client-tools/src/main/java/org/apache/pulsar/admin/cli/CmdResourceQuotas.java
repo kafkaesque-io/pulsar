@@ -33,7 +33,7 @@ public class CmdResourceQuotas extends CmdBase {
     private class GetResourceQuota extends CliCommand {
 
         @Parameter(names = { "--namespace",
-                "-n" }, description = "property/cluster/namespace, must be specified together with '--bundle'\n")
+                "-n" }, description = "tenant/namespaces, must be specified together with '--bundle'\n")
         private java.util.List<String> names;
 
         @Parameter(names = { "--bundle",
@@ -57,7 +57,7 @@ public class CmdResourceQuotas extends CmdBase {
     private class SetResourceQuota extends CliCommand {
 
         @Parameter(names = { "--namespace",
-                "-n" }, description = "property/cluster/namespace, must be specified together with '--bundle'\n")
+                "-n" }, description = "tenant/namespaces, must be specified together with '--bundle'\n")
         private java.util.List<String> names;
 
         @Parameter(names = { "--bundle",
@@ -111,7 +111,7 @@ public class CmdResourceQuotas extends CmdBase {
     @Parameters(commandDescription = "Reset the specified namespace bundle's resource quota to default value.")
     private class ResetNamespaceBundleResourceQuota extends CliCommand {
 
-        @Parameter(names = { "--namespace", "-n" }, description = "property/cluster/namespace\n", required = true)
+        @Parameter(names = { "--namespace", "-n" }, description = "tenant/namespaces\n", required = true)
         private java.util.List<String> names;
 
         @Parameter(names = { "--bundle", "-b" }, description = "{start-boundary}_{end-boundary}\n", required = true)
