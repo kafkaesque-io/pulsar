@@ -30,7 +30,7 @@
 
   <groupId>org.apache.pulsar</groupId>
   <artifactId>buildtools</artifactId>
-  <version>2.5.0-kesque-1</version>
+  <version>2.5.0-kesque-1.1</version>
   <packaging>jar</packaging>
   <name>Pulsar Build Tools</name>
 
