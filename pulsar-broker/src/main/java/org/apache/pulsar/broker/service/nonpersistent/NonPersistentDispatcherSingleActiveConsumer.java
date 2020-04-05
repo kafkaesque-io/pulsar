@@ -21,6 +21,8 @@ package org.apache.pulsar.broker.service.nonpersistent;
 import static org.apache.pulsar.broker.cache.ConfigurationCacheService.POLICIES;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.bookkeeper.mledger.Entry;
 import org.apache.bookkeeper.mledger.util.Rate;
@@ -45,6 +47,10 @@ public final class NonPersistentDispatcherSingleActiveConsumer extends AbstractD
     private final Subscription subscription;
     private final ServiceConfiguration serviceConfig;
     private final RedeliveryTracker redeliveryTracker;
+
+    private int policyMaxConsumersPerSubscription = 0;
+    private int policyMaxConsumersPerTopic = 0 ;
+
 
     public NonPersistentDispatcherSingleActiveConsumer(SubType subscriptionType, int partitionIndex,
             NonPersistentTopic topic, Subscription subscription) {
@@ -77,20 +83,24 @@ public final class NonPersistentDispatcherSingleActiveConsumer extends AbstractD
     }
 
     protected boolean isConsumersExceededOnTopic() {
-        Policies policies;
-        try {
-            // Use getDataIfPresent from zk cache to make the call non-blocking and prevent deadlocks in addConsumer
-            policies = topic.getBrokerService().pulsar().getConfigurationCache().policiesCache()
-                    .getDataIfPresent(AdminResource.path(POLICIES, TopicName.get(topic.getName()).getNamespace()));
 
-            if (policies == null) {
-                policies = new Policies();
-            }
-        } catch (Exception e) {
-            policies = new Policies();
-        }
-        final int maxConsumersPerTopic = policies.max_consumers_per_topic > 0 ?
-                policies.max_consumers_per_topic :
+        // We are going to update the policies from the zk cache asynchronously to prevent deadlocks in addConsumer
+        // getSync returns a CompletableFuture
+        CompletableFuture<Optional<Policies>> getPoliciesFuture = topic.getBrokerService().pulsar().getConfigurationCache().policiesCache().getAsync(AdminResource.path(POLICIES, TopicName.get(topic.getName()).getNamespace()));
+
+        // We are going to update the class variable that stores the current limit asynchronously
+        // This will be eventually consistent, so consumers may be able to slip in over the limit
+        // but this is the tradeoff for making this asynchronous
+        getPoliciesFuture.thenAcceptAsync((Optional<Policies> o) -> {
+            Policies policies = o.orElse(new Policies());
+            policyMaxConsumersPerTopic = policies.max_consumers_per_topic;
+
+        });
+
+        // If there is policy configured for this topic, use that
+        // Otherwise, use the broker configured value
+        final int maxConsumersPerTopic = policyMaxConsumersPerTopic > 0 ?
+                policyMaxConsumersPerTopic :
                 serviceConfig.getMaxConsumersPerTopic();
         if (maxConsumersPerTopic > 0 && maxConsumersPerTopic <= topic.getNumberOfConsumers()) {
             return true;
@@ -99,20 +109,24 @@ public final class NonPersistentDispatcherSingleActiveConsumer extends AbstractD
     }
 
     protected boolean isConsumersExceededOnSubscription() {
-        Policies policies;
-        try {
-            // Use getDataIfPresent from zk cache to make the call non-blocking and prevent deadlocks in addConsumer
-            policies = topic.getBrokerService().pulsar().getConfigurationCache().policiesCache()
-                    .getDataIfPresent(AdminResource.path(POLICIES, TopicName.get(topic.getName()).getNamespace()));
+        
+        // We are going to update the policies from the zk cache asynchronously to prevent deadlocks in addConsumer
+        // getSync returns a CompletableFuture
+        CompletableFuture<Optional<Policies>> getPoliciesFuture = topic.getBrokerService().pulsar().getConfigurationCache().policiesCache().getAsync(AdminResource.path(POLICIES, TopicName.get(topic.getName()).getNamespace()));
 
-            if (policies == null) {
-                policies = new Policies();
-            }
-        } catch (Exception e) {
-            policies = new Policies();
-        }
-        final int maxConsumersPerSubscription = policies.max_consumers_per_subscription > 0 ?
-                policies.max_consumers_per_subscription :
+       // We are going to update the class variable that stores the current limit asynchronously
+        // This will be eventually consistent, so consumers may be able to slip in over the limit
+        // but this is the tradeoff for making this asynchronous
+        getPoliciesFuture.thenAcceptAsync((Optional<Policies> o) -> {
+            Policies policies = o.orElse(new Policies());
+            policyMaxConsumersPerSubscription = policies.max_consumers_per_subscription;
+
+        });
+        
+        // If there is policy configured for this topic, use that
+        // Otherwise, use the broker configured value
+        final int maxConsumersPerSubscription = policyMaxConsumersPerSubscription > 0 ? 
+                policyMaxConsumersPerSubscription :
                 serviceConfig.getMaxConsumersPerSubscription();
         if (maxConsumersPerSubscription > 0 && maxConsumersPerSubscription <= consumers.size()) {
             return true;
