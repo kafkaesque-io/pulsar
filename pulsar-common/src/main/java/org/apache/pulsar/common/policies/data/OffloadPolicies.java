@@ -63,6 +63,12 @@ public class OffloadPolicies {
     // gcs config, set by service configuration
     private String gcsManagedLedgerOffloadServiceAccountKeyFile = null;
 
+    private String azureStorageAccountName = null;
+    private String azureStorageAccountKey = null;
+    private String azureStorageContainer = null;
+    private int azureManagedLedgerOffloadMaxBlockSizeInBytes = DEFAULT_MAX_BLOCK_SIZE_IN_BYTES;
+    private int azureManagedLedgerOffloadReadBufferSizeInBytes = DEFAULT_READ_BUFFER_SIZE_IN_BYTES;
+
     // file system config, set by service configuration
     private String fileSystemProfilePath = null;
     private String fileSystemURI = null;
@@ -164,6 +170,11 @@ public class OffloadPolicies {
                 gcsManagedLedgerOffloadBucket,
                 gcsManagedLedgerOffloadMaxBlockSizeInBytes,
                 gcsManagedLedgerOffloadReadBufferSizeInBytes,
+                azureStorageAccountName,
+                azureStorageAccountKey,
+                azureStorageContainer,
+                azureManagedLedgerOffloadMaxBlockSizeInBytes,
+                azureManagedLedgerOffloadReadBufferSizeInBytes,
                 gcsManagedLedgerOffloadServiceAccountKeyFile,
                 fileSystemProfilePath,
                 fileSystemURI);
@@ -199,6 +210,13 @@ public class OffloadPolicies {
                     other.getGcsManagedLedgerOffloadReadBufferSizeInBytes())
                 && Objects.equals(gcsManagedLedgerOffloadServiceAccountKeyFile,
                     other.getGcsManagedLedgerOffloadServiceAccountKeyFile())
+                && Objects.equals(azureStorageAccountName, other.getAzureStorageAccountName())
+                && Objects.equals(azureStorageAccountKey, other.getAzureStorageAccountKey())
+                && Objects.equals(azureStorageContainer, other.getAzureStorageContainer())
+                && Objects.equals(azureManagedLedgerOffloadMaxBlockSizeInBytes,
+                    other.getAzureManagedLedgerOffloadMaxBlockSizeInBytes())
+                && Objects.equals(azureManagedLedgerOffloadReadBufferSizeInBytes,
+                    other.getAzureManagedLedgerOffloadReadBufferSizeInBytes())
                 && Objects.equals(fileSystemProfilePath, other.getFileSystemProfilePath())
                 && Objects.equals(fileSystemURI, other.getFileSystemURI());
     }
@@ -220,6 +238,11 @@ public class OffloadPolicies {
                 .add("gcsManagedLedgerOffloadMaxBlockSizeInBytes", gcsManagedLedgerOffloadMaxBlockSizeInBytes)
                 .add("gcsManagedLedgerOffloadReadBufferSizeInBytes", gcsManagedLedgerOffloadReadBufferSizeInBytes)
                 .add("gcsManagedLedgerOffloadServiceAccountKeyFile", gcsManagedLedgerOffloadServiceAccountKeyFile)
+                .add("azureStorageAccountName", azureStorageAccountName)
+                .add("azureStorageAccountKey", azureStorageAccountKey)
+                .add("azureStorageContainer", azureStorageContainer)
+                .add("azureManagedLedgerOffloadMaxBlockSizeInBytes", azureManagedLedgerOffloadMaxBlockSizeInBytes)
+                .add("azureManagedLedgerOffloadReadBufferSizeInBytes", azureManagedLedgerOffloadReadBufferSizeInBytes)
                 .add("fileSystemProfilePath", fileSystemProfilePath)
                 .add("fileSystemURI", fileSystemURI)
                 .toString();
