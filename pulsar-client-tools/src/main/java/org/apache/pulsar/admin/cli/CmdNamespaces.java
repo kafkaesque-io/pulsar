@@ -1338,7 +1338,7 @@ public class CmdNamespaces extends CmdBase {
                 required = false)
         private String readBufferSizeStr;
 
-        private final String[] DRIVER_NAMES = {"S3", "aws-s3", "google-cloud-storage"};
+        private final String[] DRIVER_NAMES = {"S3", "aws-s3", "google-cloud-storage", "azureblob"};
 
         public boolean driverSupported(String driver) {
             return Arrays.stream(DRIVER_NAMES).anyMatch(d -> d.equalsIgnoreCase(driver));
