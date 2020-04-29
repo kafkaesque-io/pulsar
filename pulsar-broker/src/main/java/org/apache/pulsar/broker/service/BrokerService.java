@@ -1859,6 +1859,7 @@ public class BrokerService implements Closeable, ZooKeeperCacheListener<Policies
                                 // If topic is already exist, creating partitioned topic is not allowed.
                                 if (metadata.partitions == 0
                                         && !topicExists
+                                        && !topicName.isPartitioned()
                                         && pulsar.getConfiguration().isAllowAutoTopicCreation()
                                         && pulsar.getConfiguration().isDefaultTopicTypePartitioned()) {
                                     return pulsar.getBrokerService().createDefaultPartitionedTopicAsync(topicName);
