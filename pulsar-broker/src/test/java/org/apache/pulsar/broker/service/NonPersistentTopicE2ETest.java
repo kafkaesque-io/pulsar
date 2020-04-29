@@ -30,6 +30,7 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.schema.SchemaDefinition;
 import org.apache.pulsar.client.impl.schema.JSONSchema;
 import org.apache.pulsar.common.naming.TopicName;
+import org.apache.pulsar.common.policies.data.TopicStats;
 import org.apache.pulsar.common.protocol.schema.SchemaData;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.testng.annotations.AfterMethod;
@@ -76,6 +77,44 @@ public class NonPersistentTopicE2ETest extends BrokerTestBase {
     }
 
     @Test
+    public void testGC() throws Exception {
+        // 1. Simple successful GC
+        String topicName = "non-persistent://prop/ns-abc/topic-10";
+        Producer<byte[]> producer = pulsarClient.newProducer().topic(topicName).create();
+        producer.close();
+
+        assertTrue(pulsar.getBrokerService().getTopicReference(topicName).isPresent());
+        runGC();
+        assertFalse(pulsar.getBrokerService().getTopicReference(topicName).isPresent());
+
+        // 2. Topic is not GCed with live connection
+        String subName = "sub1";
+        Consumer<byte[]> consumer = pulsarClient.newConsumer().topic(topicName).subscriptionName(subName).subscribe();
+
+        runGC();
+        assertTrue(pulsar.getBrokerService().getTopicReference(topicName).isPresent());
+
+        // 3. Topic with subscription is not GCed even with no connections
+        consumer.close();
+
+        runGC();
+        assertTrue(pulsar.getBrokerService().getTopicReference(topicName).isPresent());
+
+        // 4. Topic can be GCed after unsubscribe
+        admin.topics().deleteSubscription(topicName, subName);
+
+        runGC();
+        assertFalse(pulsar.getBrokerService().getTopicReference(topicName).isPresent());
+
+        // 5. Get the topic and make sure it doesn't come back
+        admin.lookups().lookupTopic(topicName);
+        Optional<Topic> topic = pulsar.getBrokerService().getTopicIfExists(topicName).join();
+        assertFalse(pulsar.getBrokerService().getTopicReference(topicName).isPresent());
+
+
+    }
+
+    @Test
     public void testGCWillDeleteSchema() throws Exception {
         // 1. Simple successful GC
         String topicName = "non-persistent://prop/ns-abc/topic-1";
@@ -99,10 +138,28 @@ public class NonPersistentTopicE2ETest extends BrokerTestBase {
         assertFalse(topic.isPresent());
         assertFalse(topicHasSchema(topicName));
 
-        // 2. Topic is not GCed with live connection
-        topicName = "non-persistent://prop/ns-abc/topic-2";
+        // 1a. Topic that add/removes subscription can be GC'd
+        topicName = "non-persistent://prop/ns-abc/topic-1a";
         String subName = "sub1";
         Consumer<byte[]> consumer = pulsarClient.newConsumer().topic(topicName).subscriptionName(subName).subscribe();
+        topic = getTopic(topicName);
+        assertTrue(topic.isPresent());
+        topic.get().addSchema(schemaData).join();
+        assertTrue(topicHasSchema(topicName));
+
+        admin.topics().deleteSubscription(topicName, subName);
+        consumer.close();
+
+        runGC();
+        topic = getTopic(topicName);
+        assertFalse(topic.isPresent());
+        assertFalse(topicHasSchema(topicName));
+
+
+        // 2. Topic is not GCed with live connection
+        topicName = "non-persistent://prop/ns-abc/topic-2";
+        subName = "sub1";
+        consumer = pulsarClient.newConsumer().topic(topicName).subscriptionName(subName).subscribe();
         topic = getTopic(topicName);
         assertTrue(topic.isPresent());
         topic.get().addSchema(schemaData).join();

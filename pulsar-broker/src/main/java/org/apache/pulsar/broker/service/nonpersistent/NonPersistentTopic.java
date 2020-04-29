@@ -341,6 +341,9 @@ public class NonPersistentTopic extends AbstractTopic implements Topic {
     private CompletableFuture<Void> delete(boolean failIfHasSubscriptions, boolean closeIfClientsConnected,
             boolean deleteSchema) {
         CompletableFuture<Void> deleteFuture = new CompletableFuture<>();
+        log.info("NON-PERSIST: Deleting the topic. failIfHasSubcriptions: {}, closeIfClientsConnected: {}, deleteSchema: {}", failIfHasSubscriptions, closeIfClientsConnected, deleteSchema);
+
+
 
         lock.writeLock().lock();
         try {
@@ -369,25 +372,35 @@ public class NonPersistentTopic extends AbstractTopic implements Topic {
             }
 
             closeClientFuture.thenAccept(delete -> {
+                log.info("NON-PERSIST: Close client future is done");
 
                 if (USAGE_COUNT_UPDATER.get(this) == 0) {
+                    log.info("NON-PERSIST: Usage count updater is 0");
                     isFenced = true;
 
                     List<CompletableFuture<Void>> futures = Lists.newArrayList();
 
                     if (failIfHasSubscriptions) {
+                        log.info("NON-PERSIST: Checking for subscriptions");
                         if (!subscriptions.isEmpty()) {
+                            log.info("NON-PERSIST: Subscription list is not empty. We should stop now");
                             isFenced = false;
                             deleteFuture.completeExceptionally(new TopicBusyException("Topic has subscriptions"));
                             return;
+                        } else {
+                            log.info("NON-PERSIST: Cleaning up the subscriptions for good measure");
+                            subscriptions.forEach((s, sub) -> futures.add(sub.delete()));
                         }
                     } else {
+                        log.info("NON-PERSIST: Deleting subscriptions");
                         subscriptions.forEach((s, sub) -> futures.add(sub.delete()));
                     }
                     if (deleteSchema) {
+                        log.info("NON-PERSIST: Adding deleteSchema to the futures list");
                         futures.add(deleteSchema().thenApply(schemaVersion -> null));
                     }
                     FutureUtil.waitForAll(futures).whenComplete((v, ex) -> {
+                        log.info("NON-PERSIST: All futures complete");
                         if (ex != null) {
                             log.error("[{}] Error deleting topic", topic, ex);
                             isFenced = false;
@@ -395,18 +408,22 @@ public class NonPersistentTopic extends AbstractTopic implements Topic {
                         } else {
                             // topic GC iterates over topics map and removing from the map with the same thread creates
                             // deadlock. so, execute it in different thread
+                            log.info("NON-PERSIST: Actually deleting topic");
                             brokerService.executor().execute(() -> {
                                 brokerService.removeTopicFromCache(topic);
+
                                 log.info("[{}] Topic deleted", topic);
                                 deleteFuture.complete(null);
                             });
                         }
                     });
                 } else {
+                    log.info("NON-PERSIST: Topic has connected producers/consumers");
                     deleteFuture.completeExceptionally(new TopicBusyException(
                             "Topic has " + USAGE_COUNT_UPDATER.get(this) + " connected producers/consumers"));
                 }
             }).exceptionally(ex -> {
+                log.info("NON-PERSIST: failed to close clients before deleting topic");
                 deleteFuture.completeExceptionally(
                         new TopicBusyException("Failed to close clients before deleting topic."));
                 return null;
@@ -817,21 +834,33 @@ public class NonPersistentTopic extends AbstractTopic implements Topic {
     }
 
     public boolean isActive() {
+        log.info("NON-PERSIST: Checking if topic {} is active", TopicName.get(topic));
+
         if (TopicName.get(topic).isGlobal()) {
+            log.info("NON-PERSIST: Active check: Topic is global");
             // No local consumers and no local producers
             return !subscriptions.isEmpty() || hasLocalProducers();
         }
+        log.info("NON-PERSIST: Active check: Topic is not global");
         return USAGE_COUNT_UPDATER.get(this) != 0 || !subscriptions.isEmpty();
     }
 
     @Override
     public void checkGC(int maxInactiveDurationInSec, InactiveTopicDeleteMode deleteMode) {
+        log.info("NON-PERSIST. checkGC.  maxDuration: {} deleteMode {}", maxInactiveDurationInSec, deleteMode.toString());
+
         if (isActive()) {
+            log.info("NON-PERSIST: Topic is still active");
             lastActive = System.nanoTime();
         } else {
+            log.info("NON-PERSIST: Topic is not active");
+
             if (System.nanoTime() - lastActive > TimeUnit.SECONDS.toNanos(maxInactiveDurationInSec)) {
+                log.info("NON-PERSIST: Topic timer has expired");
 
                 if (TopicName.get(topic).isGlobal()) {
+                    log.info("NON-PERSIST: This is a global topic");
+
                     // For global namespace, close repl producers first.
                     // Once all repl producers are closed, we can delete the topic,
                     // provided no remote producers connected to the broker.
@@ -840,10 +869,14 @@ public class NonPersistentTopic extends AbstractTopic implements Topic {
                             maxInactiveDurationInSec);
                     }
 
+                    log.info("NON-PERSIST: Calling delete now");
                     stopReplProducers().thenCompose(v -> delete(true, false, true))
                             .thenRun(() -> log.info("[{}] Topic deleted successfully due to inactivity", topic))
                             .exceptionally(e -> {
+                                log.info("NON-PERSIST: Delete had an exception");
                                 if (e.getCause() instanceof TopicBusyException) {
+                                    log.info("NON-PERSIST: TopicBusyException");
+
                                     // topic became active again
                                     if (log.isDebugEnabled()) {
                                         log.debug("[{}] Did not delete busy topic: {}", topic,
@@ -857,7 +890,10 @@ public class NonPersistentTopic extends AbstractTopic implements Topic {
                             });
 
                 }
+            } else {
+                log.info("NON-PERSIST: Topic timer has NOT expired: {}", System.nanoTime() - lastActive);
             }
+ 
         }
     }
 

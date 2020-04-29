@@ -170,6 +170,7 @@ public class SchemaRegistryServiceImpl implements SchemaRegistryService {
     @Override
     @NotNull
     public CompletableFuture<SchemaVersion> deleteSchema(String schemaId, String user) {
+        log.info("Deleting schema. ID: {} user {}", schemaId, user);
         byte[] deletedEntry = deleted(schemaId, user).toByteArray();
         return schemaStorage.put(schemaId, deletedEntry, new byte[]{});
     }
