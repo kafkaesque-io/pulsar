@@ -1304,7 +1304,6 @@ public class BrokerService implements Closeable, ZooKeeperCacheListener<Policies
         NamespaceBundle namespaceBundle = null;
         try {
             topicName = TopicName.get(topic);
-            log.info("Starting to delete {} from namespace bundle", topicName);
             namespaceBundle = pulsar.getNamespaceService().getBundle(topicName);
             checkArgument(namespaceBundle instanceof NamespaceBundle);
 
@@ -1315,17 +1314,12 @@ public class BrokerService implements Closeable, ZooKeeperCacheListener<Policies
                 ConcurrentOpenHashMap<String, ConcurrentOpenHashMap<String, Topic>> namespaceMap = multiLayerTopicsMap
                         .get(namespaceName);
                 ConcurrentOpenHashMap<String, Topic> bundleMap = namespaceMap.get(bundleName);
-                log.info("Removing topic {} from bundle", topicName);
-                log.info("Before size: {}", bundleMap.size());
                 bundleMap.remove(topic);
-                log.info("After size: {}", bundleMap.size());
                 if (bundleMap.isEmpty()) {
-                    log.info("Bundle is empty, so removing it too");
                     namespaceMap.remove(bundleName);
                 }
 
                 if (namespaceMap.isEmpty()) {
-                    log.info("Namespace is empty, clean it up");
                     multiLayerTopicsMap.remove(namespaceName);
                     final ClusterReplicationMetrics clusterReplicationMetrics = pulsarStats
                             .getClusterReplicationMetrics();
@@ -1338,7 +1332,6 @@ public class BrokerService implements Closeable, ZooKeeperCacheListener<Policies
             log.warn("Got exception when retrieving bundle name {} for topic {} during removeTopicFromCache", topicName,
                     namespaceBundle, e);
         }
-        log.info("Actually removing the topic now");
         topics.remove(topic);
     }
 
