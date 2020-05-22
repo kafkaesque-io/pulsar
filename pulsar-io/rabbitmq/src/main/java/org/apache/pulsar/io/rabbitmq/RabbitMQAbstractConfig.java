@@ -75,9 +75,9 @@ public class RabbitMQAbstractConfig implements Serializable {
     private String password = "guest";
 
     @FieldDoc(
-        required = true,
-        defaultValue = "",
-        help = "The RabbitMQ queue name from which messages should be read from or written to")
+            required = false,
+            defaultValue = "",
+            help = "The RabbitMQ queue name from which messages should be read from or written to")
     private String queueName;
 
     @FieldDoc(
