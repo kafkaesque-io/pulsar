@@ -45,16 +45,10 @@ public class RabbitMQSinkConfig extends RabbitMQAbstractConfig implements Serial
     private String exchangeName;
 
     @FieldDoc(
-            required = false,
-            defaultValue = "",
-            help = "The routing key used for publishing the messages")
+        required = true,
+        defaultValue = "",
+        help = "The routing key used for publishing the messages")
     private String routingKey;
-
-    @FieldDoc(
-        required = false,
-        defaultValue = "topic",
-        help = "The exchange type to publish the messages on")
-    private String exchangeType = "topic";
 
     public static RabbitMQSinkConfig load(String yamlFile) throws IOException {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
