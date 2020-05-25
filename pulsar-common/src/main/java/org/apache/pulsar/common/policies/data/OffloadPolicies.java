@@ -39,15 +39,11 @@ public class OffloadPolicies {
     public final static int DEFAULT_OFFLOAD_MAX_THREADS = 2;
     public final static String[] DRIVER_NAMES = {"S3", "aws-s3", "google-cloud-storage", "filesystem"};
     public final static String DEFAULT_OFFLOADER_DIRECTORY = "./offloaders";
-    public final static long DEFAULT_OFFLOAD_THRESHOLD_IN_BYTES = -1;
-    public final static Long DEFAULT_OFFLOAD_DELETION_LAG_IN_MILLIS = null;
 
     // common config
     private String offloadersDirectory = DEFAULT_OFFLOADER_DIRECTORY;
     private String managedLedgerOffloadDriver = null;
     private int managedLedgerOffloadMaxThreads = DEFAULT_OFFLOAD_MAX_THREADS;
-    private long managedLedgerOffloadThresholdInBytes = DEFAULT_OFFLOAD_THRESHOLD_IN_BYTES;
-    private Long managedLedgerOffloadDeletionLagInMillis = DEFAULT_OFFLOAD_DELETION_LAG_IN_MILLIS;
 
     // s3 config, set by service configuration or cli
     private String s3ManagedLedgerOffloadRegion = null;
@@ -78,13 +74,9 @@ public class OffloadPolicies {
     private String fileSystemURI = null;
 
     public static OffloadPolicies create(String driver, String region, String bucket, String endpoint,
-                                         int maxBlockSizeInBytes, int readBufferSizeInBytes,
-                                         long offloadThresholdInBytes, Long offloadDeletionLagInMillis) {
+                                         int maxBlockSizeInBytes, int readBufferSizeInBytes) {
         OffloadPolicies offloadPolicies = new OffloadPolicies();
         offloadPolicies.setManagedLedgerOffloadDriver(driver);
-        offloadPolicies.setManagedLedgerOffloadThresholdInBytes(offloadThresholdInBytes);
-        offloadPolicies.setManagedLedgerOffloadDeletionLagInMillis(offloadDeletionLagInMillis);
-
         if (driver.equalsIgnoreCase(DRIVER_NAMES[0]) || driver.equalsIgnoreCase(DRIVER_NAMES[1])) {
             offloadPolicies.setS3ManagedLedgerOffloadRegion(region);
             offloadPolicies.setS3ManagedLedgerOffloadBucket(bucket);
@@ -167,8 +159,6 @@ public class OffloadPolicies {
         return Objects.hash(
                 managedLedgerOffloadDriver,
                 managedLedgerOffloadMaxThreads,
-                managedLedgerOffloadThresholdInBytes,
-                managedLedgerOffloadDeletionLagInMillis,
                 s3ManagedLedgerOffloadRegion,
                 s3ManagedLedgerOffloadBucket,
                 s3ManagedLedgerOffloadServiceEndpoint,
@@ -201,10 +191,6 @@ public class OffloadPolicies {
         OffloadPolicies other = (OffloadPolicies) obj;
         return Objects.equals(managedLedgerOffloadDriver, other.getManagedLedgerOffloadDriver())
                 && Objects.equals(managedLedgerOffloadMaxThreads, other.getManagedLedgerOffloadMaxThreads())
-                && Objects.equals(managedLedgerOffloadThresholdInBytes,
-                    other.getManagedLedgerOffloadThresholdInBytes())
-                && Objects.equals(managedLedgerOffloadDeletionLagInMillis,
-                    other.getManagedLedgerOffloadDeletionLagInMillis())
                 && Objects.equals(s3ManagedLedgerOffloadRegion, other.getS3ManagedLedgerOffloadRegion())
                 && Objects.equals(s3ManagedLedgerOffloadBucket, other.getS3ManagedLedgerOffloadBucket())
                 && Objects.equals(s3ManagedLedgerOffloadServiceEndpoint,
@@ -240,8 +226,6 @@ public class OffloadPolicies {
         return MoreObjects.toStringHelper(this)
                 .add("managedLedgerOffloadDriver", managedLedgerOffloadDriver)
                 .add("managedLedgerOffloadMaxThreads", managedLedgerOffloadMaxThreads)
-                .add("managedLedgerOffloadThresholdInBytes", managedLedgerOffloadThresholdInBytes)
-                .add("managedLedgerOffloadDeletionLagInMillis", managedLedgerOffloadDeletionLagInMillis)
                 .add("s3ManagedLedgerOffloadRegion", s3ManagedLedgerOffloadRegion)
                 .add("s3ManagedLedgerOffloadBucket", s3ManagedLedgerOffloadBucket)
                 .add("s3ManagedLedgerOffloadServiceEndpoint", s3ManagedLedgerOffloadServiceEndpoint)
