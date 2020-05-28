@@ -36,6 +36,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.connect.runtime.WorkerConfig;
 import org.apache.kafka.connect.storage.OffsetBackingStore;
 import org.apache.kafka.connect.util.Callback;
+import org.apache.pulsar.client.api.AuthenticationFactory;
+import org.apache.pulsar.client.api.ClientBuilder;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Producer;
@@ -54,6 +56,7 @@ public class PulsarOffsetBackingStore implements OffsetBackingStore {
     private PulsarClient client;
     private String serviceUrl;
     private String topic;
+    private String token;
     private Producer<byte[]> producer;
     private Reader<byte[]> reader;
     private volatile CompletableFuture<Void> outstandingReadToEnd = null;
@@ -63,6 +66,7 @@ public class PulsarOffsetBackingStore implements OffsetBackingStore {
         this.topic = workerConfig.getString(PulsarKafkaWorkerConfig.OFFSET_STORAGE_TOPIC_CONFIG);
         checkArgument(!isBlank(topic), "Offset storage topic must be specified");
         this.serviceUrl = workerConfig.getString(PulsarKafkaWorkerConfig.PULSAR_SERVICE_URL_CONFIG);
+        this.token = workerConfig.getString(PulsarKafkaWorkerConfig.PULSAR_AUTH_TOKEN_CONFIG);
         checkArgument(!isBlank(serviceUrl), "Pulsar service url must be specified at `"
             + WorkerConfig.BOOTSTRAP_SERVERS_CONFIG + "`");
         this.data = new HashMap<>();
@@ -137,9 +141,13 @@ public class PulsarOffsetBackingStore implements OffsetBackingStore {
     @Override
     public void start() {
         try {
-            client = PulsarClient.builder()
-                .serviceUrl(serviceUrl)
-                .build();
+            ClientBuilder builder = PulsarClient.builder().serviceUrl(serviceUrl);
+
+            if (token != null && token != "") {
+                builder = builder.authentication(AuthenticationFactory.token(token));
+            }
+            client = builder.build();
+
             log.info("Successfully created pulsar client to {}", serviceUrl);
             producer = client.newProducer(Schema.BYTES)
                 .topic(topic)
