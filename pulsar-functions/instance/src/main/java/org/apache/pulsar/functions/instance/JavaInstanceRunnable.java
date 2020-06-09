@@ -699,6 +699,12 @@ public class JavaInstanceRunnable implements AutoCloseable, Runnable {
                     break;
             }
 
+            if (sourceSpec.getSubscriptionName().toLowerCase().startsWith("exclusive")) {
+                pulsarSourceConfig.setSubscriptionType(SubscriptionType.Exclusive);
+            } else if (sourceSpec.getSubscriptionName().toLowerCase().startsWith("keyshared")) {
+                pulsarSourceConfig.setSubscriptionType(SubscriptionType.Key_Shared);
+            }
+
             pulsarSourceConfig.setTypeClassName(sourceSpec.getTypeClassName());
 
             if (sourceSpec.getTimeoutMs() > 0 ) {

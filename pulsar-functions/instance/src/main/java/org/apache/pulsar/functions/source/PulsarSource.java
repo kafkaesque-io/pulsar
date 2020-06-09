@@ -79,6 +79,14 @@ public class PulsarSource<T> extends PushSource<T> implements MessageListener<T>
                     .subscriptionType(pulsarSourceConfig.getSubscriptionType())
                     .messageListener(this);
 
+            if (pulsarSourceConfig.getSubscriptionType() == SubscriptionType.Key_Shared) {
+                if (pulsarSourceConfig.getSubscriptionName().toLowerCase().startsWith("keysharedsticky")) {
+                    cb.keySharedPolicy(KeySharedPolicy.stickyHashRange());
+                } else {
+                    cb.keySharedPolicy(KeySharedPolicy.autoSplitHashRange());
+                }
+            }
+
             if (conf.isRegexPattern) {
                 cb = cb.topicsPattern(topic);
             } else {
