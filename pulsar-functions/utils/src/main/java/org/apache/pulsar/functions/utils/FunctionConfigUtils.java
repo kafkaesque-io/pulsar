@@ -117,10 +117,13 @@ public class FunctionConfigUtils {
         }
 
         // Set subscription type based on ordering and EFFECTIVELY_ONCE semantics
-        Function.SubscriptionType subType = ((functionConfig.getRetainOrdering() != null && functionConfig.getRetainOrdering())
-                || FunctionConfig.ProcessingGuarantees.EFFECTIVELY_ONCE.equals(functionConfig.getProcessingGuarantees()))
-                ? Function.SubscriptionType.FAILOVER
-                : Function.SubscriptionType.SHARED;
+        Function.SubscriptionType subType = Function.SubscriptionType.SHARED;
+        if (FunctionConfig.ProcessingGuarantees.ATMOST_ONCE.equals(functionConfig.getProcessingGuarantees())) {
+            subType = Function.SubscriptionType.KEYSHARED;
+        } else if ((functionConfig.getRetainOrdering() != null && functionConfig.getRetainOrdering())
+                || FunctionConfig.ProcessingGuarantees.EFFECTIVELY_ONCE.equals(functionConfig.getProcessingGuarantees())) {
+                subType = Function.SubscriptionType.FAILOVER;
+        }
         sourceSpecBuilder.setSubscriptionType(subType);
 
         if (isNotBlank(functionConfig.getSubName())) {

@@ -694,6 +694,9 @@ public class JavaInstanceRunnable implements AutoCloseable, Runnable {
                 case FAILOVER:
                     pulsarSourceConfig.setSubscriptionType(SubscriptionType.Failover);
                     break;
+                case KEYSHARED:
+                    pulsarSourceConfig.setSubscriptionType(SubscriptionType.Key_Shared);
+                    break;
                 default:
                     pulsarSourceConfig.setSubscriptionType(SubscriptionType.Shared);
                     break;

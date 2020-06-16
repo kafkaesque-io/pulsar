@@ -52,7 +52,8 @@ public class FunctionConfig {
     public enum ProcessingGuarantees {
         ATLEAST_ONCE,
         ATMOST_ONCE,
-        EFFECTIVELY_ONCE
+        EFFECTIVELY_ONCE,
+        EXCLUSIVE_ONCE
     }
 
     /**

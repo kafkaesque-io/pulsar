@@ -27,11 +27,14 @@ enum ProcessingGuarantees {
     ATLEAST_ONCE = 0; // [default value]
     ATMOST_ONCE = 1;
     EFFECTIVELY_ONCE = 2;
+    EXCLUSIVE_ONCE = 3;
 }
 
 enum SubscriptionType {
     SHARED = 0;
     FAILOVER = 1;
+    KEYSHARED = 2;
+    EXCLUSIVE = 3;
 }
 
 enum SubscriptionPosition {
