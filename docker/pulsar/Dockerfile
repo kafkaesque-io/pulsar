@@ -38,7 +38,7 @@ COPY scripts/install-pulsar-client-37.sh /pulsar/bin
 ### Create 2nd stage from OpenJDK image
 ### and add Python dependencies (for Pulsar functions)
 
-FROM openjdk:8-jdk-slim
+FROM openjdk:11-jdk-slim
 
 # Install some utilities
 RUN apt-get update \
