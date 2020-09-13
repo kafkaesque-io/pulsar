@@ -18,93 +18,46 @@
  */
 package org.apache.pulsar.common.compression;
 
-import io.airlift.compress.snappy.SnappyCompressor;
-import io.airlift.compress.snappy.SnappyDecompressor;
-import io.airlift.compress.snappy.SnappyRawCompressor;
-import io.airlift.compress.snappy.SnappyRawDecompressor;
 import io.netty.buffer.ByteBuf;
-import io.netty.util.concurrent.FastThreadLocal;
-
+import io.netty.buffer.PooledByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import org.apache.pulsar.common.allocator.PulsarByteBufAllocator;
+import lombok.extern.slf4j.Slf4j;
+import org.xerial.snappy.Snappy;
 
 /**
  * Snappy Compression.
  */
+@Slf4j
 public class CompressionCodecSnappy implements CompressionCodec {
-
-    private static final FastThreadLocal<short[]> SNAPPY_TABLE = //
-            new FastThreadLocal<short[]>() {
-                @Override
-                protected short[] initialValue() throws Exception {
-                    return new short[SnappyRawCompressor.MAX_HASH_TABLE_SIZE];
-                }
-            };
-
-    private static final FastThreadLocal<SnappyCompressor> SNAPPY_COMPRESSOR = //
-            new FastThreadLocal<SnappyCompressor>() {
-                @Override
-                protected SnappyCompressor initialValue() throws Exception {
-                    return new SnappyCompressor();
-                }
-            };
-
-    private static final FastThreadLocal<SnappyDecompressor> SNAPPY_DECOMPRESSOR = //
-            new FastThreadLocal<SnappyDecompressor>() {
-                @Override
-                protected SnappyDecompressor initialValue() throws Exception {
-                    return new SnappyDecompressor();
-                }
-            };
 
     @Override
     public ByteBuf encode(ByteBuf source) {
         int uncompressedLength = source.readableBytes();
-        int maxLength = SnappyRawCompressor.maxCompressedLength(uncompressedLength);
+        int maxLength = Snappy.maxCompressedLength(uncompressedLength);
 
-        ByteBuf target = PulsarByteBufAllocator.DEFAULT.buffer(maxLength, maxLength);
-        int compressedLength;
+        ByteBuffer sourceNio = source.nioBuffer(source.readerIndex(), source.readableBytes());
 
-        if (source.hasMemoryAddress() && target.hasMemoryAddress()) {
-            compressedLength = SnappyRawCompressor.compress(
-                    null,
-                    source.memoryAddress() + source.readerIndex(),
-                    source.memoryAddress() + source.writerIndex(),
-                    null,
-                    target.memoryAddress(),
-                    target.memoryAddress() + maxLength,
-                    SNAPPY_TABLE.get());
-        } else {
-            ByteBuffer sourceNio = source.nioBuffer(source.readerIndex(), source.readableBytes());
-            ByteBuffer targetNio = target.nioBuffer(0, maxLength);
+        ByteBuf target = PooledByteBufAllocator.DEFAULT.buffer(maxLength, maxLength);
+        ByteBuffer targetNio = target.nioBuffer(0, maxLength);
 
-            SNAPPY_COMPRESSOR.get().compress(sourceNio, targetNio);
-            compressedLength = targetNio.position();
+        int compressedLength = 0;
+        try {
+            compressedLength = Snappy.compress(sourceNio, targetNio);
+        } catch (IOException e) {
+            log.error("Failed to compress to Snappy: {}", e.getMessage());
         }
-
         target.writerIndex(compressedLength);
         return target;
     }
 
     @Override
     public ByteBuf decode(ByteBuf encoded, int uncompressedLength) throws IOException {
-        ByteBuf uncompressed = PulsarByteBufAllocator.DEFAULT.buffer(uncompressedLength, uncompressedLength);
+        ByteBuf uncompressed = PooledByteBufAllocator.DEFAULT.buffer(uncompressedLength, uncompressedLength);
+        ByteBuffer uncompressedNio = uncompressed.nioBuffer(0, uncompressedLength);
 
-        if (encoded.hasMemoryAddress() && uncompressed.hasMemoryAddress()) {
-            SnappyRawDecompressor.decompress(
-                    null,
-                    encoded.memoryAddress() + encoded.readerIndex(),
-                    encoded.memoryAddress() + encoded.writerIndex(),
-                    null, uncompressed.memoryAddress(),
-                    uncompressed.memoryAddress() + uncompressedLength);
-        } else {
-            ByteBuffer uncompressedNio = uncompressed.nioBuffer(0, uncompressedLength);
-            ByteBuffer encodedNio = encoded.nioBuffer(encoded.readerIndex(), encoded.readableBytes());
-
-            SNAPPY_DECOMPRESSOR.get().decompress(encodedNio, uncompressedNio);
-        }
+        ByteBuffer encodedNio = encoded.nioBuffer(encoded.readerIndex(), encoded.readableBytes());
+        Snappy.uncompress(encodedNio, uncompressedNio);
 
         uncompressed.writerIndex(uncompressedLength);
         return uncompressed;
