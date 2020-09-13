@@ -24,7 +24,7 @@ FROM apachepulsar/pulsar-all:latest as pulsar
 FROM apachepulsar/pulsar-dashboard:latest as dashboard
 
 # Restart from
-FROM openjdk:8-jdk
+FROM openjdk:11-jdk
 
 # Note that the libpq-dev package is needed here in order to install
 # the required python psycopg2 package (for postgresql) later
