@@ -56,7 +56,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
 
 ADD target/python-client/ /pulsar/pulsar-client
 ADD target/cpp-client/ /pulsar/cpp-client
-RUN echo networkaddress.cache.ttl=1 >> $JAVA_HOME/jre/lib/security/java.security
+RUN echo networkaddress.cache.ttl=1 >> $JAVA_HOME/conf/security/java.security
 RUN apt-get update \
      && apt install -y /pulsar/cpp-client/*.deb \
      && apt-get clean \
