@@ -50,6 +50,9 @@ import io.prometheus.client.Gauge.Child;
 import io.prometheus.client.hotspot.DefaultExports;
 import org.apache.pulsar.functions.worker.FunctionsStatsGenerator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Generate metrics aggregated at the namespace level and optionally at a topic level and formats them out
  * in a text format suitable to be consumed by Prometheus.
@@ -140,9 +143,13 @@ public class PrometheusMetricsGenerator {
                         continue;
                     }
                 } else {
-                    stream.write("# TYPE ").write(entry.getKey().replace("brk_", "pulsar_")).write(' ')
-                            .write(getTypeStr(metricType)).write('\n');
-                    stream.write(entry.getKey().replace("brk_", "pulsar_"))
+		    String name = entry.getKey();
+		    if (!names.contains(name)) {
+                        stream.write("# TYPE ").write(name.replace("brk_", "pulsar_")).write(' ')
+                                .write(getTypeStr(metricType)).write('\n');
+			names.add(name);
+		    }
+                    stream.write(name.replace("brk_", "pulsar_"))
                             .write("{cluster=\"").write(cluster).write('"');
                 }
 
@@ -224,5 +231,7 @@ public class PrometheusMetricsGenerator {
             return "untyped";
         }
     }
+
+    private static final Logger log = LoggerFactory.getLogger(PrometheusMetricsGenerator.class);
 
 }
