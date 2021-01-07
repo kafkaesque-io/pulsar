@@ -145,7 +145,8 @@ flexible messaging model and an intuitive client API.</description>
     <hdfs-offload-version3>3.2.0</hdfs-offload-version3>
     <org.eclipse.jetty-hdfs-offload>9.3.24.v20180605</org.eclipse.jetty-hdfs-offload>
     <elasticsearch.version>7.9.1</elasticsearch.version>
-    <presto.version>332</presto.version>
+    <presto.version>334</presto.version>
+    <flink.version>1.6.0</flink.version>
     <scala.binary.version>2.11</scala.binary.version>
     <scala-library.version>2.11.12</scala-library.version>
     <debezium.version>1.0.3.Final</debezium.version>
@@ -482,7 +483,7 @@ flexible messaging model and an intuitive client API.</description>
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
-        <version>${commons-lang3.version}</version>
+        <version>3.9</version>
       </dependency>
 
       <dependency>
@@ -1082,8 +1083,8 @@ flexible messaging model and an intuitive client API.</description>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>8</source>
+          <target>11</target>
           <encoding>UTF-8</encoding>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
@@ -1702,4 +1703,3 @@ flexible messaging model and an intuitive client API.</description>
   </repositories>
 
 </project>
-
