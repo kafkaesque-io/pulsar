@@ -35,6 +35,7 @@
         <module>presto-pulsar</module>
         <module>presto-pulsar-plugin</module>
         <module>presto-distribution</module>
+        <module>presto-password-authenticators-plugin</module>
     </modules>
 
     <dependencyManagement>
