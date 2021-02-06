@@ -71,9 +71,4 @@
             </plugin>
         </plugins>
     </build>
-
-<<<<<<< HEAD
 </project>
-=======
-</project>
->>>>>>> Add presto password authenticators plugin.
